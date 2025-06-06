@@ -1,5 +1,3 @@
-// npm install qz-tray axios
-
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import qz from "qz-tray";
@@ -9,6 +7,7 @@ const BASE_URL = "https://return-inventory-backend.onrender.com";
 const QzPrint = ({ styleNumber, size }) => {
   const [tag, setTag] = useState(null);
   const [orderId, setOrderId] = useState(null);
+  const [printerName, setPrinterName] = useState(null);
 
   const fetchTagDetails = async () => {
     try {
@@ -28,53 +27,41 @@ const QzPrint = ({ styleNumber, size }) => {
     }
   };
 
-  const setupQZSecurity = () => {
-    // Self-signed dummy certificate for testing
+  const setupQZWithoutBackend = () => {
     const cert = `-----BEGIN CERTIFICATE-----
-MIIDdzCCAl+gAwIBAgIEb7WT3zANBgkqhkiG9w0BAQsFADBzMQswCQYDVQQGEwJV
-UzELMAkGA1UECAwCTkMxEDAOBgNVBAcMB0R1cmhhbTEMMAoGA1UECgwDWFlaMRMw
-EQYDVQQLDApEZXZlbG9wbWVudDEQMA4GA1UEAwwHbG9jYWxob3N0MB4XDTIwMTAy
-MjA1MTgzMVoXDTMwMTAyMDA1MTgzMVowczELMAkGA1UEBhMCVVMxCzAJBgNVBAgM
-Ak5DMRAwDgYDVQQHDAdEdXJoYW0xDDAKBgNVBAoMA1hZWiETMBEGA1UECwwKRGV2
-ZWxvcG1lbnQxEDAOBgNVBAMMB2xvY2FsaG9zdDCCASIwDQYJKoZIhvcNAQEBBQAD
-ggEPADCCAQoCggEBAMN0/JoaAZcwNYYL0PpjcU0KRdXhnY2AvN1zPUZyS9m+TbzP
-Ug3Pq51CQj7k2w+gMdQl5DXF7V0QwWXsIdr7d2rUNIQPbJ1cxTjAxYkM2v4I2r8r
-I4q05XY2HGX32xSguSYvRu7fxoAjCkPYQKKOshlLG+ruJ0uHD/Eu7b1sOv5EqLqe
-zWVKzXyUBylMg7OY+fZkK7C7DwJjXLnL6LFRyE33V7Za/fW7f5vMxLk3BN+m+c5D
-By0CHOMJYm6xRztbC4Wr5HbwQ2G7GPExkxqhhTmUjs3lnzvzpZpBD4oVZj6GgPbQ
-gGw9GhIfhFkWsWvPPF5Yqdt1S2hlTTWx0KUJPeMCAwEAAaMhMB8wHQYDVR0OBBYE
-FHGlW9YcmqhrTPznnpgEEHPX6AK2MA0GCSqGSIb3DQEBCwUAA4IBAQBf1KvzxtBP
-9Jh9ThD2eg/JAbF/cvSytNg54t9EcV9gUfl27oLZSmxGWySmR6L0Ewh1xeAJS+Fr
-T1S2InMD+7T0dHL9dkf2sKcRnvYRAz5UqDrHkm8c5lZae9T8ktmV9MTCuQnqzjYr
-Gn6DwQUELxCMyBp/kHJmHvAw2Ndp/lyRoF1eN8TW+yMLxxjHHTt/FrlZqylhzRaC
-aDkhP1Aj+RzqfWUSVYQ6f4MzU7ZD6dvX2rIFjSV30eXyGekT2k2pS3EMUTxd3ZLu
-l0SBYBAG7lDYc6Z2LFE9EGVDWko+/v4PxSPZkMW7XLyMV5p4lmqC37DPM2aT/g0j
-2YOmtmDC57/X
------END CERTIFICATE-----`;
-
-    const signature = function (toSign) {
-      return function (resolve, reject) {
-        // WARNING: This is only for testing purposes, bypasses real signing
-        resolve(); 
-      };
-    };
+    MIIDdzCCAl+gAwIBAgIEb7WT3zANBgkqhkiG9w0BAQsFADBz...
+    -----END CERTIFICATE-----`; // shortened for brevity
 
     qz.security.setCertificatePromise(() => Promise.resolve(cert));
-    qz.security.setSignaturePromise(signature);
+    qz.security.setSignaturePromise(() => Promise.resolve()); // no signing
   };
 
   const connectToQZ = async () => {
     if (!qz.websocket.isActive()) {
       await qz.websocket.connect();
-      setupQZSecurity();
+      setupQZWithoutBackend();
+    }
+  };
+
+  const detectPrinter = async () => {
+    try {
+      await connectToQZ();
+      const printers = await qz.printers.find(); // list of printer names
+      console.log("Available Printers:", printers);
+      const preferred = printers.find((p) =>
+        p.toLowerCase().includes("tsc") // auto-pick printer with 'tsc' in name
+      );
+      setPrinterName(preferred || printers[0]); // fallback to first
+    } catch (err) {
+      console.error("Failed to detect printer", err);
     }
   };
 
   const printTagToTSC = async () => {
-    try {
-      await connectToQZ();
+    if (!printerName) return console.warn("No printer selected.");
 
-      const config = qz.configs.create("TSC TE244"); // Change to your printer's name
+    try {
+      const config = qz.configs.create(printerName);
 
       const tspl = [
         "SIZE 100 mm, 50 mm",
@@ -103,13 +90,14 @@ l0SBYBAG7lDYc6Z2LFE9EGVDWko+/v4PxSPZkMW7XLyMV5p4lmqC37DPM2aT/g0j
 
   useEffect(() => {
     fetchTagDetails();
+    detectPrinter();
   }, []);
 
   useEffect(() => {
-    if (tag && orderId) {
+    if (tag && orderId && printerName) {
       printTagToTSC();
     }
-  }, [tag, orderId]);
+  }, [tag, orderId, printerName]);
 
   return null;
 };
