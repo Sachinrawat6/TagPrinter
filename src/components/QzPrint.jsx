@@ -8,7 +8,7 @@ const QzPrint = ({ styleNumber, size }) => {
   const [tag, setTag] = useState(null);
   const [orderId, setOrderId] = useState(null);
   const [printerName, setPrinterName] = useState(null);
-
+console.log("New version added")
   const fetchTagDetails = async () => {
     try {
       const response = await axios.post(`${BASE_URL}/api/v1/label/print`, {
