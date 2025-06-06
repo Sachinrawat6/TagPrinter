@@ -63,9 +63,9 @@ const TagPrint = ({ styleNumber, size }) => {
       style={{
         width: "100mm",
         height: "50mm",
-        padding: "1mm",
+        padding: "4mm 2mm",
         background: "#fff",
-        fontSize: "11px",
+        fontSize: "12px",
         fontFamily: "Arial, sans-serif",
         border: "1px solid #000",
         position: "relative",
@@ -79,7 +79,7 @@ const TagPrint = ({ styleNumber, size }) => {
         <p>Color: {tag.color} | Size: {tag.size}</p>
         <p>MRP: ₹{tag.mrp} (Incl. of all taxes)</p>
         <p>Net Qty: 1 | Unit: 1 Pcs | Order Id : {orderId} </p>
-        <p>MFG & MKT BY: {tag.mfg}</p>
+        <p>MFG & MKT BY: Qurvii, 2nd floor, B-149,<br/> Sector-6, 201301</p>
         <p>Contact: {tag.contact}</p>
         </b>
       </div>
