@@ -38,7 +38,7 @@ const QzPrint = ({ styleNumber, size }) => {
     try {
       await connectToQZ();
 
-      const config = qz.configs.create("TSC Printer"); // Replace with your printer's name
+      const config = qz.configs.create("TSC TE244"); // Replace with your printer's name
 
       const tspl = [
         "SIZE 100 mm, 50 mm",
