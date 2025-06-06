@@ -31,8 +31,8 @@ const InputStyleNumber = () => {
                 <option value="5XL">5XL</option>
             </select>
         </form>
-        {/* {styleNumber && size ?<TagPrint styleNumber={styleNumber} size={size} />:""} */}
-        {styleNumber && size ?<QzPrint styleNumber={styleNumber} size={size} />:""}
+        {styleNumber && size ?<TagPrint styleNumber={styleNumber} size={size} />:""}
+        {/* {styleNumber && size ?<QzPrint styleNumber={styleNumber} size={size} />:""} */}
         
 
     </div>
