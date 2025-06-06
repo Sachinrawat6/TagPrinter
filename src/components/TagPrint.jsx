@@ -39,21 +39,53 @@ const TagPrint = ({ styleNumber, size }) => {
     }
   }, [tag, orderId]);
 
-  const autoPrintTag = async () => {
-    const element = document.getElementById("tag-print-area");
-    const canvas = await html2canvas(element);
-    const imgData = canvas.toDataURL("image/png");
+  // const autoPrintTag = async () => {
+  //   const element = document.getElementById("tag-print-area");
+  //   const canvas = await html2canvas(element);
+  //   const imgData = canvas.toDataURL("image/png");
 
-    const pdf = new jsPDF({
-      orientation: "landscape",
-      unit: "mm",
-      format: [100, 50],
-    });
+  //   const pdf = new jsPDF({
+  //     orientation: "landscape",
+  //     unit: "mm",
+  //     format: [100, 50],
+  //   });
 
-    pdf.addImage(imgData, "PNG", 0, 0, 100, 50);
-    pdf.autoPrint();
-    window.open(pdf.output("bloburl"));
+  //   pdf.addImage(imgData, "PNG", 0, 0, 100, 50);
+  //   pdf.autoPrint();
+  //   window.open(pdf.output("bloburl"));
+  // };
+const autoPrintTag = async () => {
+  const element = document.getElementById("tag-print-area");
+  const canvas = await html2canvas(element);
+  const imgData = canvas.toDataURL("image/png");
+
+  const pdf = new jsPDF({
+    orientation: "landscape",
+    unit: "mm",
+    format: [100, 50],
+  });
+
+  pdf.addImage(imgData, "PNG", 0, 0, 100, 50);
+
+  const blob = pdf.output("blob");
+  const blobUrl = URL.createObjectURL(blob);
+
+  const iframe = document.createElement("iframe");
+  iframe.style.position = "fixed";
+  iframe.style.width = "0";
+  iframe.style.height = "0";
+  iframe.style.border = "none";
+  iframe.src = blobUrl;
+
+  document.body.appendChild(iframe);
+
+  iframe.onload = () => {
+    setTimeout(() => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+    }, 500); // Give the PDF some time to load
   };
+};
 
   if (!tag || !orderId) return null;
 
@@ -63,11 +95,10 @@ const TagPrint = ({ styleNumber, size }) => {
       style={{
         width: "100mm",
         height: "50mm",
-        padding: "4mm 2mm",
+        padding: "4mm 4mm",
         background: "#fff",
         fontSize: "12px",
         fontFamily: "Arial, sans-serif",
-        border: "1px solid #000",
         position: "relative",
         boxSizing: "border-box",
       }}
@@ -78,7 +109,7 @@ const TagPrint = ({ styleNumber, size }) => {
         <p>Brand: {tag.brand} | SKU: {`${tag.styleNumber}-${tag.color}-${tag.size}`}</p>
         <p>Color: {tag.color} | Size: {tag.size}</p>
         <p>MRP: ₹{tag.mrp} (Incl. of all taxes)</p>
-        <p>Net Qty: 1 | Unit: 1 Pcs | Order Id : {orderId} </p>
+        <p>Net Qty: 1 | Unit: 1 Pcs  </p>
         <p>MFG & MKT BY: Qurvii, 2nd floor, B-149,<br/> Sector-6, 201301</p>
         <p>Contact: {tag.contact}</p>
         </b>
@@ -94,6 +125,18 @@ const TagPrint = ({ styleNumber, size }) => {
         }}
       >
         <QRCode value={String(orderId)} size={90} />
+        
+      </div>
+       <div
+       className="font-bold"
+        style={{
+          position: "absolute",
+          bottom: "10mm",
+          right: "8mm",
+          textAlign: "center",
+        }}
+      >
+        Order Id : {orderId}
         
       </div>
     </div>
